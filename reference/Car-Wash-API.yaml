@@ -1,0 +1,155 @@
+openapi: 3.1.0
+x-stoplight:
+  id: sd31rpwjhifog
+info:
+  title: Car Wash API
+  version: '1.0'
+  description: Car Wash API
+servers:
+  - url: 'https://mxp-public-wash-api.dev.icadsistemi.com/v1'
+paths:
+  /configuration:
+    get:
+      summary: Get base configuration
+      tags:
+        - configuration
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+          headers: {}
+      operationId: get-configuration
+      description: 'Get the handled IIN, fuelcoupons and card codes'
+      security:
+        - Cognito: []
+  /transaction/card:
+    post:
+      summary: Create a new transaction with card
+      operationId: post-transaction-card
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction-output'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      description: 'Create a new car wash transaction with ICAD Card (finemese, ricaricabile, gt).'
+      security:
+        - Cognito: []
+      tags:
+        - transaction
+components:
+  schemas:
+    Configuration:
+      type: object
+      properties:
+        iin:
+          type: array
+          items:
+            type: string
+        fuel_coupons:
+          type: array
+          items:
+            type: string
+        cards_code:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              code:
+                type: string
+      x-examples:
+        Example 1:
+          iin:
+            - '700557'
+            - '704310'
+          fuel_coupons:
+            - '123456'
+          cards_code:
+            - type: Finemese
+              code: '4'
+      examples:
+        - iin:
+            - '700557'
+            - '704310'
+          fuel_coupons:
+            - '123456'
+          cards_code:
+            - type: Finemese
+              code: '4'
+      description: Configuration output model
+    Transaction:
+      title: Transaction input
+      x-stoplight:
+        id: 9ff7e72a42a3a
+      type: object
+      properties:
+        card:
+          type: string
+        amount:
+          type: number
+        date_time:
+          type: integer
+        is_code:
+          type: string
+        transaction_details:
+          type: array
+          items:
+            type: object
+            properties:
+              unit_price:
+                type: number
+                format: float
+              amount:
+                type: number
+                format: float
+              quantity:
+                type: integer
+              article_code:
+                type: string
+        transaction_id:
+          type: string
+        terminal_id:
+          type: string
+        card_pin:
+          type: string
+      x-tags:
+        - transaction
+    Transaction-output:
+      title: Transaction-output
+      x-stoplight:
+        id: 3gyieyipn3myk
+      type: object
+      properties:
+        action_code:
+          type: string
+        transaction_id:
+          type: string
+        card_balance:
+          type: number
+          format: float
+        approval_code:
+          type: string
+        vehicle_plate:
+          type: string
+  securitySchemes:
+    Cognito:
+      type: oauth2
+      flows:
+        clientCredentials:
+          scopes: {}
+      description: ''
