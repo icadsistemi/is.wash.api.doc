@@ -1,0 +1,22 @@
+name: API doc deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  api-doc-deploy:
+    name: Deploy API doc on Bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Deploy
+        uses: icadsistemi/bump-action@v1
+        with:
+          doc: ${{ vars.BUMP_DOC_ID }}
+          token: ${{ secrets.BUMP_TOKEN }}
+          file: reference/Car-Wash-API.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
