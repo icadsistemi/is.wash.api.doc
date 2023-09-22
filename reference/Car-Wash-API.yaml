@@ -3,7 +3,7 @@ x-stoplight:
   id: sd31rpwjhifog
 info:
   title: Car Wash API
-  version: '1.0'
+  version: '1.1'
   description: Car Wash API
 servers:
   - url: 'https://mxp-public-wash-api.dev.icadsistemi.com/v1'
@@ -29,7 +29,7 @@ paths:
                 properties: {}
           headers: {}
       operationId: get-configuration
-      description: 'Get the handled IIN, fuelcoupons and card codes'
+      description: 'Get the handled IINs, fuelcoupons and card codes'
   /transaction/card:
     post:
       summary: Create a new transaction with card
@@ -46,13 +46,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Transaction'
-      description: 'Create a new car wash transaction with ICAD Card (finemese, ricaricabile, gt).'
+      description: 'Create a new car wash transaction with ICAD Card (end of month, rechargeable).'
       tags:
         - transaction
   /transaction/fuelcoupon:
     parameters: []
     post:
-      summary: Create a new transaction with fuel coupons
+      summary: 'Create a new transaction with fuel coupons [Details To be define]'
       operationId: post-transaction-fuelcoupon
       responses:
         '200':
@@ -61,12 +61,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Transaction-Input-No-PIN'
+              $ref: '#/components/schemas/Transaction'
       tags:
         - transaction
   /transaction/loyalty/points:
     post:
-      summary: Create a new transaction with point card
+      summary: 'Create a new transaction with point card [Details To be define]'
       operationId: post-transaction-loyalty-points
       responses:
         '200':
@@ -75,30 +75,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Transaction-Input-No-PIN'
+              $ref: '#/components/schemas/Transaction'
       description: Register a transaction made with a point card.
       tags:
         - transaction
-  /discount:
-    get:
-      summary: Retrieve discount amount
-      tags:
-        - discount
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Discount-amount'
-      operationId: get-discount
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: pan
-          description: Card PAN
-      description: Get the amount of discount with the given card PAN.
+  /discount: {}
 components:
   schemas:
     Configuration:
@@ -114,33 +95,53 @@ components:
             - type: Finemese
               code: '4'
       examples:
-        - iin:
-            - '700557'
-            - '704310'
+        - cards:
+            - iin: '700557'
+              tag: ICAD
+            - iin: '704310'
+              tag: DKV
           fuel_coupons:
             - '9900'
-          cards_code:
+          icad_cards_info:
             - type: Sconto
               code: '1'
+              pin_required: false
             - type: Finemese
               code: '2'
+              pin_required: true
             - type: Ricaricabile
               code: '3'
+              pin_required: true
             - type: Raccolta punti
               code: '4'
+              pin_required: false
       description: Configuration output model
       properties:
-        iin:
+        cards:
           type: array
           description: First six digits of a supported card PAN.
           items:
-            type: string
+            type: object
+            properties:
+              iin:
+                type: string
+                description: 'Represent the card pan prefix, different for each card owner. The same card owner could have more than 1 iin'
+              tag:
+                type: string
+                description: |-
+                  Represent the card owner tag:
+                  - Icad's Cards: "ICAD"
+                  - DKV's Cards: "DKV"
+                  - UTA's Cards: "UTA"
+            required:
+              - iin
+              - tag
         fuel_coupons:
           type: array
           description: ICAD Sistemi's fuel coupon prefix.
           items:
             type: string
-        cards_code:
+        icad_cards_info:
           type: array
           description: 7th digit of an ICAD Sistemi card.
           items:
@@ -152,6 +153,16 @@ components:
               code:
                 type: string
                 description: Card type code
+              pin_required:
+                type: boolean
+                description: Indicate if the PIN is required or not for the related card
+            required:
+              - type
+              - code
+              - pin_required
+      required:
+        - cards
+        - icad_cards_info
     Transaction:
       title: Transaction input
       x-stoplight:
@@ -196,15 +207,41 @@ components:
               article_code:
                 type: string
                 description: Washing article code
+            required:
+              - unit_price
+              - amount
+              - quantity
+              - article_code
         transaction_id:
           type: string
-          description: Unique transaction identifier
+          description: Transaction identifier
         terminal_id:
           type: string
           description: Terminal identifier
         card_pin:
           type: string
-          description: 'PIN AES encrypted '
+          description: PIN AES encrypted. Present only for cards requiring it
+      required:
+        - card
+        - amount
+        - date_time
+        - is_code
+        - transaction_details
+        - transaction_id
+        - terminal_id
+      examples:
+        - card: string
+          amount: 0
+          date_time: '2019-08-24T14:15:22'
+          is_code: string
+          transaction_details:
+            - unit_price: 0
+              amount: 0
+              quantity: 0
+              article_code: string
+          transaction_id: string
+          terminal_id: string
+          card_pin: string
     Transaction-output:
       title: Transaction-output
       x-stoplight:
@@ -213,10 +250,25 @@ components:
       properties:
         action_code:
           type: string
-          description: Operation result code
+          description: |-
+            Operation result code:
+            - "000": Success
+            - "001": Card disabled
+            - "002": Card not found
+            - "004": Not enough credit on card
+            - "005": Expired Card
+            - "006": Card Type not found
+            - "007": No articles availables
+            - "008": Not enough residual on card
+            - "009": Disabled customer
+            - "012": Disabled customer on this station
+            - "013": Circuit card is not enabled on this station
+            - "014": Incorrect PIN
+            - "015": Generic error
+            - "904": Format error
         transaction_id:
           type: string
-          description: Given transaction identifier
+          description: Echoed transaction identifier
         card_balance:
           type: number
           format: float
@@ -227,69 +279,18 @@ components:
         vehicle_plate:
           type: string
           description: Optional vehicle plate.
-    Transaction-Input-No-PIN:
-      type: object
-      x-examples:
-        Example 1:
-          card: string
-          amount: 0
-          date_time: 0
-          is_code: string
-          transaction_details:
-            - unit_price: -3.402823669209385e+38
-              amount: -3.402823669209385e+38
-              quantity: 0
-              article_code: string
-          transaction_id: string
-          terminal_id: string
-          card_pin: string
-      properties:
-        card:
-          type: string
-        amount:
-          type: integer
-        date_time:
-          type: integer
-        is_code:
-          type: string
-        transaction_details:
-          type: array
-          items:
-            type: object
-            properties:
-              unit_price:
-                type: integer
-              amount:
-                type: integer
-              quantity:
-                type: integer
-              article_code:
-                type: string
-        transaction_id:
-          type: string
-        terminal_id:
-          type: string
-    Discount-amount:
-      title: Discount-amount
-      x-stoplight:
-        id: rxisfn9jh3gkd
-      type: object
-      properties:
-        discount:
-          type: object
-          properties:
-            amount:
-              type: number
-              format: float
+      required:
+        - action_code
+        - transaction_id
   securitySchemes:
-    Cognito development:
+    CognitoDevelopment:
       type: oauth2
       flows:
         clientCredentials:
           scopes: {}
           tokenUrl: 'https://dub-dev-icadsistemi-users.auth.eu-west-1.amazoncognito.com/token'
       description: ''
-    Cognito production:
+    CognitoProduction:
       type: oauth2
       flows:
         clientCredentials:
