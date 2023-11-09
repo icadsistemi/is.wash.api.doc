@@ -49,6 +49,34 @@ paths:
       description: 'Create a new car wash transaction with ICAD Card (end of month, rechargeable).'
       tags:
         - transaction
+  /transaction/gt:
+    post:
+      summary: Create a new transaction with gt card
+      operationId: post-transaction-card-gt
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction-output'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal Server Error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      description: 'Create a new car wash transaction with GT Card (DKV, UTA, ecc..).'
+      tags:
+        - transaction
+    parameters: []
   /transaction/fuelcoupon:
     parameters: []
     post:
