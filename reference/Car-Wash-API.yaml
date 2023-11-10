@@ -3,7 +3,7 @@ x-stoplight:
   id: sd31rpwjhifog
 info:
   title: Car Wash API
-  version: '1.1'
+  version: '1.2'
   description: Car Wash API
 servers:
   - url: 'https://mxp-public-wash-api.dev.icadsistemi.com/v1'
@@ -186,7 +186,7 @@ components:
               amount: 0
               quantity: 0
               article_code: string
-          transaction_id: string
+          transaction_id: 0
           terminal_id: string
           card_pin: string
       properties:
