@@ -176,6 +176,19 @@ components:
       type: object
       x-tags:
         - transaction
+      examples:
+        - card: string
+          amount: 0
+          date_time: '2019-08-24T14:15:22'
+          is_code: string
+          transaction_details:
+            - unit_price: 0
+              amount: 0
+              quantity: 0
+              article_code: string
+          transaction_id: string
+          terminal_id: string
+          card_pin: string
       properties:
         card:
           type: string
@@ -219,7 +232,7 @@ components:
               - quantity
               - article_code
         transaction_id:
-          type: string
+          type: number
           description: Transaction identifier
         terminal_id:
           type: string
@@ -235,19 +248,6 @@ components:
         - transaction_details
         - transaction_id
         - terminal_id
-      examples:
-        - card: string
-          amount: 0
-          date_time: '2019-08-24T14:15:22'
-          is_code: string
-          transaction_details:
-            - unit_price: 0
-              amount: 0
-              quantity: 0
-              article_code: string
-          transaction_id: string
-          terminal_id: string
-          card_pin: string
     Transaction-output:
       title: Transaction-output
       x-stoplight:
@@ -273,7 +273,7 @@ components:
             - "015": Generic error
             - "904": Format error
         transaction_id:
-          type: string
+          type: number
           description: Echoed transaction identifier
         card_balance:
           type: number
