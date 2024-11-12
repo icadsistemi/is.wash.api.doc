@@ -1,0 +1,30 @@
+name: API build and deploy
+
+on:
+  push:
+    paths:
+      - reference/**
+    branches:
+      - master
+
+jobs:
+  api-doc-deploy:
+    name: build doc
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Generate new documentation
+          uses: icadsistemi/openapitools-generator-action@v1.5.2
+          with:
+            generator: html2
+            openapi-file: reference/Car-Wash-API.yaml
+            command-args: -o docs
+    
+        - name: Commit new documentation
+          run: |
+            git config --global user.name 'ICAD Sistemi'
+            git config --global user.email 'action@icadsistemi.com'
+            git add docs/
+            git commit -am "update docs"
+            git push
